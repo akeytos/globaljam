@@ -259,6 +259,18 @@ PrefabInstance:
       value: AudioTestPlayer
       objectReference: {fileID: 0}
     - target: {fileID: 7452336851080826742, guid: b1c90b7c99920fb4cb30b7b0df1ec6be, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7452336851080826742, guid: b1c90b7c99920fb4cb30b7b0df1ec6be, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7452336851080826742, guid: b1c90b7c99920fb4cb30b7b0df1ec6be, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7452336851080826742, guid: b1c90b7c99920fb4cb30b7b0df1ec6be, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.79669
       objectReference: {fileID: 0}
