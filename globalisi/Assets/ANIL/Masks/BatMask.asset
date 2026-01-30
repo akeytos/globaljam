@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1acd84a8a2bd36b45b7e2f3bf691a2cc, type: 3}
   m_Name: BatMask
   m_EditorClassIdentifier: Assembly-CSharp::BatMask
-  maskName: 
+  maskName: Bat
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 0}
-  energyCost: 0
+  maskIcon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  energyCost: 5
