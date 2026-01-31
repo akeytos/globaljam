@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
+using System.Collections; // Coroutine için gerekli
 using System.Collections.Generic;
 
 [RequireComponent(typeof(CharacterController))]
@@ -8,32 +9,48 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
-    public float gravity = -9.81f;
+    public float gravity = -19.62f;
+    public float jumpHeight = 2f;
+
+    [Header("Deer (Geyik) Dash Settings")]
+    public bool canDash = false; // Geyik maskesi bunu 'true' yapar
+    public float dashSpeed = 25f;
+    public float dashDuration = 0.2f;
+    public float dashCooldown = 1f;
+    private bool isDashing = false;
+    private float dashCooldownTimer = 0f;
+
+    [Header("Ground Check")]
+    public Transform groundCheck;
+    public float groundDistance = 0.4f;
+    public LayerMask groundMask;
+    private bool isGrounded;
 
     [Header("Mask System")]
     public List<MaskBase> allMasks = new List<MaskBase>();
     public MaskBase activeMask;
     public bool isMaskEquipped = false;
-    private bool isMenuOpen = false;
+    public bool canClimb = false;
+    public bool isClimbingNow = false;
 
-    [Header("Camera Events")]
+    [Header("FPS/TPS Events")]
     public UnityEvent onEquipFPS;
     public UnityEvent onUnequipTPS;
 
     [Header("References")]
-    public MaskWheelController wheelController; // Tekerlek scriptine bağlantı
+    public MaskWheelController wheelController;
     public Transform cameraTransform;
-    public Animator animator;
+    public InputAction moveAction;
 
     private CharacterController controller;
     private Vector3 velocity;
-    private InputAction moveAction;
+    private bool isMenuOpen = false;
+    private LayerMask climbableLayer;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
-        if (cameraTransform == null && Camera.main != null)
-            cameraTransform = Camera.main.transform;
+        climbableLayer = LayerMask.GetMask("Climbable");
 
         moveAction = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
         var wasd = moveAction.AddCompositeBinding("2DVector");
@@ -44,71 +61,28 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable() => moveAction.Enable();
     private void OnDisable() => moveAction.Disable();
 
-    private void Start() => onUnequipTPS.Invoke(); // TPS Başla
-
     private void Update()
     {
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
         HandleInput();
-
-        // Menü açıkken hareket etmesin istersen if(!isMenuOpen) içine alabilirsin
         Vector2 input = moveAction.ReadValue<Vector2>();
-        HandleMovement(input);
-        HandleAnimation(input);
+
+        // Dash Cooldown takibi
+        if (dashCooldownTimer > 0) dashCooldownTimer -= Time.unscaledDeltaTime;
+
+        if (canClimb) CheckForWallClimb(input.y);
+        else isClimbingNow = false;
+
+        // Dashing anında normal hareketi durduruyoruz
+        if (!isClimbingNow && !isDashing) HandleNormalMovement(input);
     }
 
-    private void HandleInput()
+    private void HandleNormalMovement(Vector2 input)
     {
-        // 1. E TUŞU: MENÜ AÇ/KAPAT VEYA MASKE ÇIKAR
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            if (isMaskEquipped)
-            {
-                UnequipMask();
-            }
-            else
-            {
-                isMenuOpen = !isMenuOpen;
-                wheelController.SetMenuState(isMenuOpen);
-            }
-        }
+        float timeComp = (Time.timeScale < 1f) ? (1f / Time.timeScale) : 1f;
+        float currentSpeed = moveSpeed * timeComp;
 
-        // 2. R TUŞU: MASKE KUŞAN (SADECE MENÜ AÇIKKEN)
-        if (isMenuOpen && Input.GetKeyDown(KeyCode.R))
-        {
-            EquipCurrentSelected();
-        }
-    }
-
-    private void EquipCurrentSelected()
-    {
-        int index = wheelController.GetCurrentIndex();
-
-        if (activeMask != null) activeMask.DeactivateAbility(gameObject);
-
-        activeMask = allMasks[index];
-        activeMask.ActivateAbility(gameObject);
-        isMaskEquipped = true;
-
-        // Menüyü kapat ve geçişi başlat
-        isMenuOpen = false;
-        wheelController.SetMenuState(false);
-        onEquipFPS.Invoke();
-
-        Debug.Log(activeMask.maskName + " Formuna Girildi (R)");
-    }
-
-    public void UnequipMask()
-    {
-        if (activeMask != null) activeMask.DeactivateAbility(gameObject);
-        activeMask = null;
-        isMaskEquipped = false;
-        isMenuOpen = false;
-        wheelController.SetMenuState(false);
-        onUnequipTPS.Invoke();
-    }
-
-    private void HandleMovement(Vector2 input)
-    {
         Vector3 moveDir;
         if (cameraTransform != null)
         {
@@ -120,16 +94,105 @@ public class PlayerMovement : MonoBehaviour
         }
         else moveDir = new Vector3(input.x, 0f, input.y);
 
-        if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
-        controller.Move(moveDir * moveSpeed * Time.deltaTime);
+        controller.Move(moveDir * currentSpeed * Time.deltaTime);
 
-        if (controller.isGrounded && velocity.y < 0f) velocity.y = -2f;
-        velocity.y += gravity * Time.deltaTime;
+        if (isGrounded && velocity.y < 0) velocity.y = -2f;
+
+        // Zıplama (Space)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity) * timeComp;
+        }
+
+        velocity.y += gravity * timeComp * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
 
-    private void HandleAnimation(Vector2 input)
+    private void HandleInput()
     {
-        if (animator != null) animator.SetBool("isWalking", input.sqrMagnitude > 0.01f);
+        // --- DASH TUŞU: X ---
+        if (canDash && Input.GetKeyDown(KeyCode.X) && !isDashing && dashCooldownTimer <= 0)
+        {
+            StartCoroutine(DashAction());
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (isMaskEquipped) UnequipMask();
+            else if (wheelController != null) { isMenuOpen = !isMenuOpen; wheelController.SetMenuState(isMenuOpen); }
+        }
+        if (isMenuOpen && Input.GetKeyDown(KeyCode.R)) EquipCurrentSelected();
+    }
+
+    private IEnumerator DashAction()
+    {
+        isDashing = true;
+        dashCooldownTimer = dashCooldown;
+        Debug.Log("<color=brown>Geyik Atılması!</color>");
+
+        // Dash yönünü belirle
+        Vector2 input = moveAction.ReadValue<Vector2>();
+        Vector3 dashDir = (cameraTransform.right * input.x) + (cameraTransform.forward * input.y);
+        if (dashDir.sqrMagnitude < 0.01f) dashDir = transform.forward;
+        dashDir.y = 0;
+        dashDir.Normalize();
+
+        // Baykuş maskesi takılıysa dash hızını da zaman ölçeğine göre ayarla
+        float dashComp = (Time.timeScale < 1f) ? (1f / Time.timeScale) : 1f;
+
+        float elapsed = 0f;
+        while (elapsed < dashDuration)
+        {
+            controller.Move(dashDir * dashSpeed * dashComp * Time.deltaTime);
+            elapsed += Time.unscaledDeltaTime; // Zaman bükülse de dash süresi gerçek zamanlı kalır
+            yield return null;
+        }
+
+        isDashing = false;
+    }
+
+    // [CheckForWallClimb, Equip/Unequip fonksiyonları buraya gelecek - aynı kalsın]
+    private void CheckForWallClimb(float vInput)
+    {
+        Vector3 origin = transform.position + Vector3.up * 1.2f + transform.forward * 0.4f;
+        RaycastHit hit;
+        if (Physics.Raycast(origin, transform.forward, out hit, 0.8f, climbableLayer))
+        {
+            isClimbingNow = true;
+            velocity = Vector3.zero;
+            controller.stepOffset = 0f;
+            float climbComp = (Time.timeScale < 1f) ? (1f / Time.timeScale) : 1f;
+            Vector3 climbMove = new Vector3(0, vInput * 4f * climbComp, 0) + (transform.forward * 0.2f);
+            controller.Move(climbMove * Time.deltaTime);
+        }
+        else if (isClimbingNow) { isClimbingNow = false; controller.stepOffset = 0.3f; }
+    }
+
+    private void EquipCurrentSelected()
+    {
+        if (wheelController == null) return;
+        int index = wheelController.GetCurrentIndex();
+        if (activeMask != null) activeMask.DeactivateAbility(gameObject);
+        if (index < allMasks.Count)
+        {
+            activeMask = allMasks[index];
+            activeMask.ActivateAbility(gameObject);
+            isMaskEquipped = true;
+            isMenuOpen = false;
+            wheelController.SetMenuState(false);
+            onEquipFPS.Invoke();
+        }
+    }
+
+    public void UnequipMask()
+    {
+        if (activeMask != null) activeMask.DeactivateAbility(gameObject);
+        activeMask = null;
+        isMaskEquipped = false;
+        canClimb = false;
+        isClimbingNow = false;
+        isMenuOpen = false;
+        if (wheelController != null) wheelController.SetMenuState(false);
+        onUnequipTPS.Invoke();
     }
 }

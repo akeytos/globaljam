@@ -4,9 +4,9 @@ using UnityEngine.InputSystem;
 public class CameraModeSwitcher : MonoBehaviour
 {
     [Header("References")]
-    public Transform player;          // yaw burada (sağa-sola)
-    public Transform cameraPivot;     // TPS pitch burada
-    public Camera cam;               // FPS pitch burada
+    public Transform player;
+    public Transform cameraPivot;
+    public Camera cam;
 
     [Header("Start Mode")]
     public bool startInTPS = false;
@@ -27,7 +27,7 @@ public class CameraModeSwitcher : MonoBehaviour
     public float tpsMaxPitch = 80f;
 
     [Header("Transition")]
-    public float transitionDuration = 0.5f; // Test için biraz hızlandırdım (opsiyonel)
+    public float transitionDuration = 0.5f;
 
     [Header("FOV")]
     public float fpsFov = 75f;
@@ -48,17 +48,15 @@ public class CameraModeSwitcher : MonoBehaviour
     private InputAction lookAction;
     private InputAction toggleAction;
 
-    // --- MASKE SİSTEMİ İÇİN EKLEDİĞİMİZ PUBLİC FONKSİYONLAR ---
     public void SetFPSView()
     {
-        if (isTPS) StartTransition(false); // Eğer TPS ise FPS'e geç
+        if (isTPS) StartTransition(false);
     }
 
     public void SetTPSView()
     {
-        if (!isTPS) StartTransition(true); // Eğer FPS ise TPS'e geç
+        if (!isTPS) StartTransition(true);
     }
-    // -------------------------------------------------------
 
     private void Awake()
     {
@@ -135,6 +133,9 @@ public class CameraModeSwitcher : MonoBehaviour
     private void HandleLook()
     {
         Vector2 mouseDelta = lookAction.ReadValue<Vector2>();
+
+        // Zaman yavaşladığında bakışın (mouse hareketinin) yavaşlamaması için 
+        // doğrudan delta değerini kullanıyoruz. (Burada deltaTime olmadığı için zaten etkilenmez)
         yaw += mouseDelta.x * mouseSensitivity;
         pitch -= mouseDelta.y * mouseSensitivity;
 
@@ -161,7 +162,9 @@ public class CameraModeSwitcher : MonoBehaviour
     {
         if (!isTransitioning) return;
 
-        transitionTimer += Time.deltaTime;
+        // KRİTİK DÜZELTME: Time.deltaTime yerine Time.unscaledDeltaTime kullanıyoruz.
+        transitionTimer += Time.unscaledDeltaTime;
+
         float t = Mathf.Clamp01(transitionTimer / transitionDuration);
 
         cam.transform.localPosition = Vector3.Lerp(transitionStartPos, transitionTargetPos, t);
