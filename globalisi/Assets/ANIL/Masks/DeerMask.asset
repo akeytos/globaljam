@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeerMask
   maskName: 
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 0}
+  maskIcon: {fileID: 21300000, guid: 99fc8474fe2adb24683a279b2de45af0, type: 3}
   energyCost: 0
   dashForce: 20
   dashDuration: 0.2

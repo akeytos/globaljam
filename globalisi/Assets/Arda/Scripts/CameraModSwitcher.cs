@@ -27,7 +27,7 @@ public class CameraModeSwitcher : MonoBehaviour
     public float tpsMaxPitch = 80f;
 
     [Header("Transition")]
-    public float transitionDuration = 2f;
+    public float transitionDuration = 0.5f; // Test için biraz hızlandırdım (opsiyonel)
 
     [Header("FOV")]
     public float fpsFov = 75f;
@@ -48,6 +48,18 @@ public class CameraModeSwitcher : MonoBehaviour
     private InputAction lookAction;
     private InputAction toggleAction;
 
+    // --- MASKE SİSTEMİ İÇİN EKLEDİĞİMİZ PUBLİC FONKSİYONLAR ---
+    public void SetFPSView()
+    {
+        if (isTPS) StartTransition(false); // Eğer TPS ise FPS'e geç
+    }
+
+    public void SetTPSView()
+    {
+        if (!isTPS) StartTransition(true); // Eğer FPS ise TPS'e geç
+    }
+    // -------------------------------------------------------
+
     private void Awake()
     {
         if (!player) player = transform.root;
@@ -64,21 +76,17 @@ public class CameraModeSwitcher : MonoBehaviour
     private void Start()
     {
         yaw = player.eulerAngles.y;
-
-        // başlangıç pitch'i kameradan oku
         float camX = cam.transform.localEulerAngles.x;
         if (camX > 180f) camX -= 360f;
 
         isTPS = startInTPS;
         isTransitioning = false;
 
-        // başlangıç pitch clamp
         pitch = isTPS
             ? Mathf.Clamp(camX, tpsMinPitch, tpsMaxPitch)
             : Mathf.Clamp(camX, fpsMinPitch, fpsMaxPitch);
 
-        // İlk karede düzgün snap
-        ApplyLookInstant(useTPSRotation: isTPS);
+        ApplyLookInstant(isTPS);
 
         cam.transform.localPosition = isTPS ? tpsLocalOffset : fpsLocalOffset;
         cam.fieldOfView = isTPS ? tpsFov : fpsFov;
@@ -88,22 +96,24 @@ public class CameraModeSwitcher : MonoBehaviour
     {
         lookAction.Enable();
         toggleAction.Enable();
-        toggleAction.performed += OnToggle;
+        toggleAction.performed += OnToggleInput;
     }
 
     private void OnDisable()
     {
-        toggleAction.performed -= OnToggle;
+        toggleAction.performed -= OnToggleInput;
         lookAction.Disable();
         toggleAction.Disable();
     }
 
-    private void OnToggle(InputAction.CallbackContext ctx)
+    private void OnToggleInput(InputAction.CallbackContext ctx)
     {
-        // hedef modu değiştir
-        isTPS = !isTPS;
+        StartTransition(!isTPS);
+    }
 
-        // Transition başlat
+    private void StartTransition(bool targetIsTPS)
+    {
+        isTPS = targetIsTPS;
         isTransitioning = true;
         transitionTimer = 0f;
 
@@ -113,8 +123,6 @@ public class CameraModeSwitcher : MonoBehaviour
         startFov = cam.fieldOfView;
         targetFov = isTPS ? tpsFov : fpsFov;
 
-        // ⚠️ Transition boyunca TPS rotasyonu kullanılacak.
-        // O yüzden transition başlarken pitch'i TPS limitine çekiyoruz ki dönüş stabil olsun.
         pitch = Mathf.Clamp(pitch, tpsMinPitch, tpsMaxPitch);
     }
 
@@ -127,31 +135,23 @@ public class CameraModeSwitcher : MonoBehaviour
     private void HandleLook()
     {
         Vector2 mouseDelta = lookAction.ReadValue<Vector2>();
-
         yaw += mouseDelta.x * mouseSensitivity;
         pitch -= mouseDelta.y * mouseSensitivity;
 
-        // ✅ Transition sırasında HER ZAMAN TPS pitch limitleri
         bool useTPSRotation = isTransitioning ? true : isTPS;
 
-        if (useTPSRotation)
-            pitch = Mathf.Clamp(pitch, tpsMinPitch, tpsMaxPitch);
-        else
-            pitch = Mathf.Clamp(pitch, fpsMinPitch, fpsMaxPitch);
+        if (useTPSRotation) pitch = Mathf.Clamp(pitch, tpsMinPitch, tpsMaxPitch);
+        else pitch = Mathf.Clamp(pitch, fpsMinPitch, fpsMaxPitch);
 
-        // yaw: player dönsün
         player.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-        // ✅ Rotasyonu uygula:
         if (useTPSRotation)
         {
-            // TPS rotasyonu: pitch pivot'ta, kamera identity
             if (cameraPivot != null) cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
             cam.transform.localRotation = Quaternion.identity;
         }
         else
         {
-            // FPS rotasyonu: pivot identity, pitch kamera rotasyonunda
             if (cameraPivot != null) cameraPivot.localRotation = Quaternion.identity;
             cam.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
@@ -170,21 +170,14 @@ public class CameraModeSwitcher : MonoBehaviour
         if (t >= 1f)
         {
             isTransitioning = false;
-
-            // ✅ Transition bittiği anda: artık gerçek moda geç
-            // (FPS'e geçtiyse artık yukarı-aşağı bakış kamera rotasyonunda çalışacak)
-            ApplyLookInstant(useTPSRotation: isTPS);
-
-            // FPS moduna geçtiysek pitch'i FPS limitlerine çek (bir anda kilitlenmesin)
-            if (!isTPS)
-                pitch = Mathf.Clamp(pitch, fpsMinPitch, fpsMaxPitch);
+            ApplyLookInstant(isTPS);
+            if (!isTPS) pitch = Mathf.Clamp(pitch, fpsMinPitch, fpsMaxPitch);
         }
     }
 
     private void ApplyLookInstant(bool useTPSRotation)
     {
         player.rotation = Quaternion.Euler(0f, yaw, 0f);
-
         if (useTPSRotation)
         {
             if (cameraPivot != null) cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
