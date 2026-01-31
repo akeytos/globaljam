@@ -13,6 +13,11 @@ public class MaskWheelController : MonoBehaviour
     public float sideScale = 0.7f;
     public float animationSpeed = 10f;
 
+    // --- SENÝN SES AYARLARINI BURAYA EKLEDÝM ---
+    [Header("Ses Ayarlarý")]
+    public AudioSource uiAudioSource;
+    public AudioClip scrollSound;
+
     [Header("Referanslar")]
     public PlayerMovement playerMovement;
 
@@ -21,35 +26,39 @@ public class MaskWheelController : MonoBehaviour
 
     void Start()
     {
-        wheelPanel.SetActive(false);
-        if (playerMovement == null) playerMovement = FindObjectOfType<PlayerMovement>();
+        if (wheelPanel != null) wheelPanel.SetActive(false);
 
-        // Ýkonlarý otomatik diz
+        if (playerMovement == null) playerMovement = FindFirstObjectByType<PlayerMovement>();
+
+        // Ýkonlarý otomatik diz (Arkadaþýnýn yazdýðý mantýk)
         for (int i = 0; i < maskIcons.Length; i++)
         {
-            if (i < playerMovement.allMasks.Count)
+            // Eðer playerda maske varsa ikonunu al, yoksa o kutuyu kapat
+            if (playerMovement != null && i < playerMovement.allMasks.Count)
                 maskIcons[i].sprite = playerMovement.allMasks[i].maskIcon;
-            else maskIcons[i].gameObject.SetActive(false);
+            else
+                if (maskIcons[i] != null) maskIcons[i].gameObject.SetActive(false);
         }
     }
 
-    // PlayerMovement'dan gelen emirle menüyü aç/kapat
+    // PlayerMovement scripti burayý çaðýrarak menüyü açýyor (Arkadaþýnýn mantýðý)
     public void SetMenuState(bool state)
     {
         isOpen = state;
-        wheelPanel.SetActive(state);
+        if (wheelPanel != null) wheelPanel.SetActive(state);
 
-        if (state)
+        if (state) // Menü açýldýysa
         {
-            ResetVisualsToCenter();
-            Time.timeScale = 0.2f; // Zamaný yavaþlat (Opsiyonel, sevmezsen 1f yap)
+            ResetVisualsToCenter(); // Fýþkýrma efekti
+            Time.timeScale = 0.2f;  // Slow motion
         }
-        else
+        else // Menü kapandýysa
         {
-            Time.timeScale = 1f;
+            Time.timeScale = 1f;    // Normal zaman
         }
     }
 
+    // PlayerMovement hangi maskeyi seçtiðimizi buradan öðreniyor
     public int GetCurrentIndex() => currentIndex;
 
     void Update()
@@ -64,13 +73,34 @@ public class MaskWheelController : MonoBehaviour
     void HandleScroll()
     {
         float scroll = Input.mouseScrollDelta.y;
+
         if (scroll != 0)
         {
+            // --- SES ÝÇÝN DEÐÝÞÝKLÝK BURADA ---
+            int previousIndex = currentIndex; // Eski konumu hatýrla
+
             if (scroll > 0) currentIndex--;
             else currentIndex++;
 
+            // Döngü
             if (currentIndex < 0) currentIndex = maskIcons.Length - 1;
             if (currentIndex >= maskIcons.Length) currentIndex = 0;
+
+            // Eðer seçim deðiþtiyse SES ÇAL
+            if (currentIndex != previousIndex)
+            {
+                PlayScrollSound();
+            }
+        }
+    }
+
+    // --- SENÝN SES FONKSÝYONUN ---
+    void PlayScrollSound()
+    {
+        if (uiAudioSource != null && scrollSound != null)
+        {
+            uiAudioSource.pitch = Random.Range(0.9f, 1.1f);
+            uiAudioSource.PlayOneShot(scrollSound, 3f); // Sesi 3 katýna çýkar
         }
     }
 
@@ -78,9 +108,12 @@ public class MaskWheelController : MonoBehaviour
     {
         foreach (var icon in maskIcons)
         {
-            icon.rectTransform.anchoredPosition = Vector2.zero;
-            icon.transform.localScale = Vector3.zero;
-            Color c = icon.color; c.a = 0f; icon.color = c;
+            if (icon != null)
+            {
+                icon.rectTransform.anchoredPosition = Vector2.zero;
+                icon.transform.localScale = Vector3.zero;
+                Color c = icon.color; c.a = 0f; icon.color = c;
+            }
         }
     }
 
@@ -88,6 +121,8 @@ public class MaskWheelController : MonoBehaviour
     {
         for (int i = 0; i < maskIcons.Length; i++)
         {
+            if (maskIcons[i] == null) continue;
+
             Vector2 targetPos = Vector2.zero;
             Vector3 targetScale = Vector3.zero;
             float targetAlpha = 0f;

@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
     public UnityEvent onUnequipTPS;
 
     [Header("References")]
-    public MaskWheelController wheelController; // Tekerlek scriptine bağlantı
+    public MaskWheelController wheelController; // Hata burada, bu boş kalıyor!
     public Transform cameraTransform;
     public Animator animator;
 
@@ -44,13 +44,27 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable() => moveAction.Enable();
     private void OnDisable() => moveAction.Disable();
 
-    private void Start() => onUnequipTPS.Invoke(); // TPS Başla
+    private void Start()
+    {
+        onUnequipTPS.Invoke(); // TPS Başla
+
+        // --- HATA DÜZELTİCİ KOD ---
+        // Eğer editörden sürüklemeyi unuttuysan, oyun başlayınca otomatik bulsun:
+        if (wheelController == null)
+        {
+            wheelController = FindFirstObjectByType<MaskWheelController>();
+
+            if (wheelController == null)
+            {
+                Debug.LogError("KANKA DİKKAT: Sahneye 'MaskSystem' (MaskWheelController) eklememişsin!");
+            }
+        }
+    }
 
     private void Update()
     {
         HandleInput();
 
-        // Menü açıkken hareket etmesin istersen if(!isMenuOpen) içine alabilirsin
         Vector2 input = moveAction.ReadValue<Vector2>();
         HandleMovement(input);
         HandleAnimation(input);
@@ -67,8 +81,12 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
-                isMenuOpen = !isMenuOpen;
-                wheelController.SetMenuState(isMenuOpen);
+                // wheelController null ise burada patlıyordu, artık patlamaz.
+                if (wheelController != null)
+                {
+                    isMenuOpen = !isMenuOpen;
+                    wheelController.SetMenuState(isMenuOpen);
+                }
             }
         }
 
@@ -81,20 +99,26 @@ public class PlayerMovement : MonoBehaviour
 
     private void EquipCurrentSelected()
     {
+        if (wheelController == null) return;
+
         int index = wheelController.GetCurrentIndex();
 
         if (activeMask != null) activeMask.DeactivateAbility(gameObject);
 
-        activeMask = allMasks[index];
-        activeMask.ActivateAbility(gameObject);
-        isMaskEquipped = true;
+        // Listede eleman var mı kontrolü (Hata önleyici)
+        if (index >= 0 && index < allMasks.Count)
+        {
+            activeMask = allMasks[index];
+            activeMask.ActivateAbility(gameObject);
+            isMaskEquipped = true;
 
-        // Menüyü kapat ve geçişi başlat
-        isMenuOpen = false;
-        wheelController.SetMenuState(false);
-        onEquipFPS.Invoke();
+            // Menüyü kapat ve geçişi başlat
+            isMenuOpen = false;
+            wheelController.SetMenuState(false);
+            onEquipFPS.Invoke();
 
-        Debug.Log(activeMask.maskName + " Formuna Girildi (R)");
+            Debug.Log(activeMask.maskName + " Formuna Girildi (R)");
+        }
     }
 
     public void UnequipMask()
@@ -103,7 +127,10 @@ public class PlayerMovement : MonoBehaviour
         activeMask = null;
         isMaskEquipped = false;
         isMenuOpen = false;
-        wheelController.SetMenuState(false);
+
+        if (wheelController != null)
+            wheelController.SetMenuState(false);
+
         onUnequipTPS.Invoke();
     }
 
