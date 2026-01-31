@@ -58,7 +58,7 @@ public class PlayerSoundController : MonoBehaviour
         }
 
         // Maske Tak/Çýkar (V Tuþu)
-        if (Input.GetKeyDown(KeyCode.V))
+        if (Input.GetKeyDown(KeyCode.R))
         {
             PlaySwitchSound();
         }
