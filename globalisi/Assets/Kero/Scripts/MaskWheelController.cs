@@ -13,6 +13,10 @@ public class MaskWheelController : MonoBehaviour
     public float sideScale = 0.7f;
     public float animationSpeed = 10f;
 
+    [Header("Ses Ayarlarý")]
+    public AudioSource uiAudioSource; // MaskSystem üzerindeki Audio Source
+    public AudioClip scrollSound;     // Týk sesi
+
     [Header("Karakter Baðlantýsý")]
     public CharacterMaskHandler characterHandler;
 
@@ -21,7 +25,11 @@ public class MaskWheelController : MonoBehaviour
 
     void Start()
     {
-        wheelPanel.SetActive(false);
+        // Baþlangýçta paneli kapat
+        if (wheelPanel != null)
+            wheelPanel.SetActive(false);
+
+        // Karakteri bulamazsa otomatik bul
         if (characterHandler == null)
             characterHandler = FindObjectOfType<CharacterMaskHandler>();
     }
@@ -31,10 +39,9 @@ public class MaskWheelController : MonoBehaviour
         // 1. TAB AÇ
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            // ÖNCE POZÝSYONLARI SIFIRLA (Animasyon tetiklensin diye)
-            ResetVisualsToCenter();
+            ResetVisualsToCenter(); // Fýþkýrma efekti için sýfýrla
 
-            wheelPanel.SetActive(true);
+            if (wheelPanel != null) wheelPanel.SetActive(true);
             isWheelOpen = true;
             Time.timeScale = 0.2f;
         }
@@ -42,14 +49,15 @@ public class MaskWheelController : MonoBehaviour
         // 2. TAB KAPAT
         if (Input.GetKeyUp(KeyCode.Tab))
         {
-            wheelPanel.SetActive(false);
+            if (wheelPanel != null) wheelPanel.SetActive(false);
             isWheelOpen = false;
             Time.timeScale = 1f;
 
+            // Maskeyi tak
             if (characterHandler != null) characterHandler.EquipMask(currentIndex);
         }
 
-        // 3. SCROLL VE ANÝMASYON
+        // 3. SCROLL
         if (isWheelOpen)
         {
             HandleScroll();
@@ -63,29 +71,49 @@ public class MaskWheelController : MonoBehaviour
 
         if (scroll != 0)
         {
+            int previousIndex = currentIndex;
+
             if (scroll > 0) currentIndex--;
             else if (scroll < 0) currentIndex++;
 
+            // Döngü
             if (currentIndex < 0) currentIndex = maskIcons.Length - 1;
             if (currentIndex >= maskIcons.Length) currentIndex = 0;
+
+            // Eðer seçim deðiþtiyse SES ÇAL
+            if (currentIndex != previousIndex)
+            {
+                PlayScrollSound();
+            }
         }
     }
 
-    // --- YENÝ EKLENEN FONKSÝYON: HER ÞEYÝ MERKEZE TOPLA ---
+    void PlayScrollSound()
+    {
+        if (uiAudioSource != null && scrollSound != null)
+        {
+            // Pitch ile hafif ton deðiþimi (Robotik his)
+            uiAudioSource.pitch = Random.Range(0.9f, 1.1f);
+
+            // --- BURASI DEÐÝÞTÝ: SESÝ 3 KATINA ÇIKARDIK (3f) ---
+            // Eðer hala az gelirse buradaki 3f'i 5f veya 10f yapabilirsin.
+            uiAudioSource.PlayOneShot(scrollSound, 3f);
+        }
+    }
+
     void ResetVisualsToCenter()
     {
+        // Animasyonun "yoktan var olmasý" için her þeyi merkeze topla
         for (int i = 0; i < maskIcons.Length; i++)
         {
-            // Hepsini tam ortaya (0,0) ýþýnla
-            maskIcons[i].rectTransform.anchoredPosition = Vector2.zero;
-
-            // Hepsini küçücük yap (Yoktan var olsunlar)
-            maskIcons[i].transform.localScale = Vector3.zero;
-
-            // Görünmez yap
-            Color c = maskIcons[i].color;
-            c.a = 0f;
-            maskIcons[i].color = c;
+            if (maskIcons[i] != null)
+            {
+                maskIcons[i].rectTransform.anchoredPosition = Vector2.zero;
+                maskIcons[i].transform.localScale = Vector3.zero;
+                Color c = maskIcons[i].color;
+                c.a = 0f;
+                maskIcons[i].color = c;
+            }
         }
     }
 
@@ -93,11 +121,12 @@ public class MaskWheelController : MonoBehaviour
     {
         for (int i = 0; i < maskIcons.Length; i++)
         {
+            if (maskIcons[i] == null) continue;
+
             Vector2 targetPos = Vector2.zero;
             Vector3 targetScale = Vector3.zero;
             float targetAlpha = 0f;
 
-            // HEDEF KONUMLARI BELÝRLE
             if (i == currentIndex) // ORTA
             {
                 targetPos = Vector2.zero;
@@ -117,21 +146,22 @@ public class MaskWheelController : MonoBehaviour
                 targetScale = Vector3.one * sideScale;
                 targetAlpha = 0.5f;
             }
-            else // DÝÐERLERÝ
+            else // GÝZLÝ
             {
                 targetPos = Vector2.zero;
                 targetScale = Vector3.zero;
                 targetAlpha = 0f;
             }
 
-            // YUMUÞAK GEÇÝÞ (LERP)
-            // ResetVisuals sayesinde hepsi 0'dan baþlayýp buradaki hedefe kayacak
+            // Animasyon (Lerp)
             RectTransform rect = maskIcons[i].rectTransform;
             rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, targetPos, Time.unscaledDeltaTime * animationSpeed);
             rect.localScale = Vector3.Lerp(rect.localScale, targetScale, Time.unscaledDeltaTime * animationSpeed);
 
             Color c = maskIcons[i].color;
             c.a = Mathf.Lerp(c.a, targetAlpha, Time.unscaledDeltaTime * animationSpeed);
+
+            // Seçili olan parlak beyaz, diðerleri hafif gri
             c.r = c.g = c.b = (i == currentIndex) ? 1f : 0.5f;
             maskIcons[i].color = c;
         }
