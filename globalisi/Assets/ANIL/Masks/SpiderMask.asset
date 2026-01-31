@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpiderMask
   maskName: 
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 0}
+  maskIcon: {fileID: 21300000, guid: f68359b595829b24590b982eec72ac19, type: 3}
   energyCost: 0
   climbSpeed: 4
   climbableLayers:
