@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
-using System.Collections; // Coroutine için gerekli
+using System.Collections;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(CharacterController))]
@@ -9,11 +9,11 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
-    public float gravity = -19.62f;
+    public float gravity = -19.62f; // Daha tok düşüşler için ideal
     public float jumpHeight = 2f;
 
     [Header("Deer (Geyik) Dash Settings")]
-    public bool canDash = false; // Geyik maskesi bunu 'true' yapar
+    public bool canDash = false;
     public float dashSpeed = 25f;
     public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
@@ -63,23 +63,26 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        // Yere değme kontrolü (Gelişmiş SphereCheck)
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
         HandleInput();
         Vector2 input = moveAction.ReadValue<Vector2>();
 
-        // Dash Cooldown takibi
+        // Dash Cooldown Sayacı
         if (dashCooldownTimer > 0) dashCooldownTimer -= Time.unscaledDeltaTime;
 
+        // Örümcek yeteneği aktifse tırmanma kontrolü
         if (canClimb) CheckForWallClimb(input.y);
         else isClimbingNow = false;
 
-        // Dashing anında normal hareketi durduruyoruz
+        // Tırmanmıyorsak veya Dash atmıyorsak normal hareket
         if (!isClimbingNow && !isDashing) HandleNormalMovement(input);
     }
 
     private void HandleNormalMovement(Vector2 input)
     {
+        // Baykuş (Zaman Bükme) Telafisi: Zaman yavaşsa hızı artır
         float timeComp = (Time.timeScale < 1f) ? (1f / Time.timeScale) : 1f;
         float currentSpeed = moveSpeed * timeComp;
 
@@ -96,9 +99,10 @@ public class PlayerMovement : MonoBehaviour
 
         controller.Move(moveDir * currentSpeed * Time.deltaTime);
 
+        // Yerçekimi ve Zıplama
         if (isGrounded && velocity.y < 0) velocity.y = -2f;
 
-        // Zıplama (Space)
+        // --- ZIPLAMA TUŞU: SPACE ---
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity) * timeComp;
@@ -116,6 +120,7 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(DashAction());
         }
 
+        // Maske Menüsü ve Etkileşim
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (isMaskEquipped) UnequipMask();
@@ -130,28 +135,25 @@ public class PlayerMovement : MonoBehaviour
         dashCooldownTimer = dashCooldown;
         Debug.Log("<color=brown>Geyik Atılması!</color>");
 
-        // Dash yönünü belirle
         Vector2 input = moveAction.ReadValue<Vector2>();
         Vector3 dashDir = (cameraTransform.right * input.x) + (cameraTransform.forward * input.y);
         if (dashDir.sqrMagnitude < 0.01f) dashDir = transform.forward;
         dashDir.y = 0;
         dashDir.Normalize();
 
-        // Baykuş maskesi takılıysa dash hızını da zaman ölçeğine göre ayarla
         float dashComp = (Time.timeScale < 1f) ? (1f / Time.timeScale) : 1f;
 
         float elapsed = 0f;
         while (elapsed < dashDuration)
         {
             controller.Move(dashDir * dashSpeed * dashComp * Time.deltaTime);
-            elapsed += Time.unscaledDeltaTime; // Zaman bükülse de dash süresi gerçek zamanlı kalır
+            elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
         isDashing = false;
     }
 
-    // [CheckForWallClimb, Equip/Unequip fonksiyonları buraya gelecek - aynı kalsın]
     private void CheckForWallClimb(float vInput)
     {
         Vector3 origin = transform.position + Vector3.up * 1.2f + transform.forward * 0.4f;
@@ -173,6 +175,7 @@ public class PlayerMovement : MonoBehaviour
         if (wheelController == null) return;
         int index = wheelController.GetCurrentIndex();
         if (activeMask != null) activeMask.DeactivateAbility(gameObject);
+
         if (index < allMasks.Count)
         {
             activeMask = allMasks[index];
@@ -181,12 +184,22 @@ public class PlayerMovement : MonoBehaviour
             isMenuOpen = false;
             wheelController.SetMenuState(false);
             onEquipFPS.Invoke();
+
+            // --- GÖRÜŞ VE RENK FİLTRESİNİ TETİKLE ---
+            var visionUI = FindObjectOfType<MaskVisionUI>();
+            if (visionUI != null)
+                visionUI.ShowVision(activeMask.maskOverlay, activeMask.maskTintColor);
         }
     }
 
     public void UnequipMask()
     {
         if (activeMask != null) activeMask.DeactivateAbility(gameObject);
+
+        // --- GÖRÜŞ VE RENK FİLTRESİNİ KAPAT ---
+        var visionUI = FindObjectOfType<MaskVisionUI>();
+        if (visionUI != null) visionUI.HideVision();
+
         activeMask = null;
         isMaskEquipped = false;
         canClimb = false;
