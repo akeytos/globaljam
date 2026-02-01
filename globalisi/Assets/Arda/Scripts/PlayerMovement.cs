@@ -38,7 +38,6 @@ public class PlayerMovement : MonoBehaviour
     public List<MaskBase> allMasks = new List<MaskBase>();
     public MaskBase activeMask;
     public bool isMaskEquipped = false;
-    // canClimb artık "Ağ Atma" yeteneği olarak kullanılıyor
     public bool canWeb = false;
 
     [Header("FPS/TPS Events")]
@@ -58,8 +57,6 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController controller;
     private Vector3 velocity;
     private bool isMenuOpen = false;
-
-    // Animator bulunamazsa spam olmasın diye 1 kere uyarı basıyoruz
     private bool warnedAnimatorMissing = false;
 
     private void SetWalk(bool value)
@@ -69,25 +66,17 @@ public class PlayerMovement : MonoBehaviour
             if (!warnedAnimatorMissing)
             {
                 warnedAnimatorMissing = true;
-                Debug.LogWarning($"[PlayerMovement] Animator bulunamadı. " +
-                                 $"AnılPlayer parent'ta script var ama Animator child'da olabilir. " +
-                                 $"Inspector'dan bağla veya otomatik bulması için child'da Animator olduğundan emin ol. (GameObject: {name})");
+                Debug.LogWarning($"[PlayerMovement] Animator bulunamadı! (GameObject: {name})");
             }
             return;
         }
-
         animator.SetBool(walkBoolName, value);
     }
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
-
-        // ✅ ÖNEMLİ FIX: Script parent'ta, Animator child'daysa otomatik bul
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>(true);
-        }
+        if (animator == null) animator = GetComponentInChildren<Animator>(true);
 
         moveAction = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
         var wasd = moveAction.AddCompositeBinding("2DVector");
@@ -108,9 +97,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (dashCooldownTimer > 0) dashCooldownTimer -= Time.unscaledDeltaTime;
 
-        // ✅ Menü / web / dash sırasında yürüyüş animasyonu kapalı kalsın
-        if (isMenuOpen || isWebbed || isDashing)
-            SetWalk(false);
+        if (isMenuOpen || isWebbed || isDashing) SetWalk(false);
 
         if (isWebbed)
         {
@@ -118,12 +105,15 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (!isDashing)
         {
+            if (controller != null && !controller.enabled) controller.enabled = true;
             HandleNormalMovement(input);
         }
     }
 
     private void HandleNormalMovement(Vector2 input)
     {
+        if (!controller.enabled) return;
+
         float timeComp = (Time.timeScale < 1f) ? (1f / Time.timeScale) : 1f;
         float currentSpeed = moveSpeed * timeComp;
 
@@ -138,17 +128,17 @@ public class PlayerMovement : MonoBehaviour
         }
         else moveDir = new Vector3(input.x, 0f, input.y);
 
-        // ✅ Asıl istek: karakter yürüyorsa Walk true
-        // - küçük input jitter'larını engellemek için eşik
-        // - isMenuOpen/isWebbed/isDashing Update'te zaten false'a zorlanıyor
-        bool isWalking = moveDir.sqrMagnitude > 0.01f;
-        SetWalk(isWalking);
+        SetWalk(moveDir.sqrMagnitude > 0.01f);
 
         controller.Move(moveDir * currentSpeed * Time.deltaTime);
 
         if (isGrounded && velocity.y < 0) velocity.y = -2f;
+
+        // ✅ ZIPLAMA FIX: timeComp çarpanını sildik, Elias gökyüzüne uçmayacak
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity) * timeComp;
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
 
         velocity.y += gravity * timeComp * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
@@ -156,7 +146,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleWebAction(Vector2 moveInput)
     {
-        // Sadece Örümcek maskesi varken Sol Tık
         if (canWeb && Input.GetMouseButtonDown(0))
         {
             Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
@@ -166,9 +155,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 webTargetPoint = hit.point;
                 isWebbed = true;
-                controller.enabled = false; // Yapışma anında fizikleri kapat
-
-                // ✅ web başlayınca yürüyüş animasyonu kapansın
+                controller.enabled = false;
                 SetWalk(false);
 
                 if (webLine != null)
@@ -180,29 +167,19 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        // WASD'ye basarsan veya maskeyi çıkarırsan bağı kopar
-        if (isWebbed && moveInput.sqrMagnitude > 0.01f)
-        {
-            StopWebbing();
-        }
+        if (isWebbed && moveInput.sqrMagnitude > 0.01f) StopWebbing();
     }
 
     private void ExecuteWebMove()
     {
         SetWalk(false);
-
         Vector3 direction = (webTargetPoint - transform.position).normalized;
         float distance = Vector3.Distance(transform.position, webTargetPoint);
 
-        // Hedefe 0.8 metre kalana kadar çekil
         if (distance > 0.8f)
         {
             transform.position += direction * webZipSpeed * Time.deltaTime;
             if (webLine != null) webLine.SetPosition(0, transform.position);
-        }
-        else
-        {
-            // Hedefe vardık, orada asılı kalıyoruz (isWebbed hala true)
         }
     }
 
@@ -212,8 +189,6 @@ public class PlayerMovement : MonoBehaviour
         controller.enabled = true;
         if (webLine != null) webLine.enabled = false;
         velocity = Vector3.zero;
-
-        // web bittiğinde hareket yoksa Walk false kalsın
         SetWalk(false);
     }
 
@@ -229,8 +204,6 @@ public class PlayerMovement : MonoBehaviour
             {
                 isMenuOpen = !isMenuOpen;
                 wheelController.SetMenuState(isMenuOpen);
-
-                // Menü açılınca yürüyüş animasyonu kapansın
                 if (isMenuOpen) SetWalk(false);
             }
         }
@@ -241,7 +214,6 @@ public class PlayerMovement : MonoBehaviour
     {
         isDashing = true;
         SetWalk(false);
-
         dashCooldownTimer = dashCooldown;
         Vector2 input = moveAction.ReadValue<Vector2>();
         Vector3 dashDir = (cameraTransform.right * input.x) + (cameraTransform.forward * input.y);
@@ -255,9 +227,7 @@ public class PlayerMovement : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
-
         isDashing = false;
-        SetWalk(false);
     }
 
     private void EquipCurrentSelected()
@@ -283,7 +253,6 @@ public class PlayerMovement : MonoBehaviour
     {
         StopWebbing();
         SetWalk(false);
-
         if (activeMask != null) activeMask.DeactivateAbility(gameObject);
         var visionUI = FindObjectOfType<MaskVisionUI>();
         if (visionUI != null) visionUI.HideVision();
