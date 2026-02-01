@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "SpiderMask", menuName = "Masks/SpiderMask")]
+[CreateAssetMenu(fileName = "SpiderMask", menuName = "Masks/Spider")]
 public class SpiderMask : MaskBase
 {
     public override void ActivateAbility(GameObject player)
@@ -8,8 +8,9 @@ public class SpiderMask : MaskBase
         var pm = player.GetComponent<PlayerMovement>();
         if (pm != null)
         {
-            pm.canClimb = true;
-            Debug.Log("<color=green>ÖRÜMCEK MASKESÝ AKTÝF:</color> " + maskName);
+            // Týrmanma deðiþkeni yerine artýk canWeb'i aktif ediyoruz
+            pm.canWeb = true;
+            Debug.Log("<color=black>Örümcek Ruhu:</color> Aðlarýnla lüsid rüyada süzül...");
         }
     }
 
@@ -18,9 +19,9 @@ public class SpiderMask : MaskBase
         var pm = player.GetComponent<PlayerMovement>();
         if (pm != null)
         {
-            pm.canClimb = false;
-            pm.isClimbingNow = false;
-            Debug.Log("<color=red>ÖRÜMCEK MASKESÝ DEVRE DIÞI</color>");
+            pm.canWeb = false;
+            // Maskeyi çýkarýnca aktif bir að varsa kopsun
+            pm.StopWebbing();
         }
     }
 }

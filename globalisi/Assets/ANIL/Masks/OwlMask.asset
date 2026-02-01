@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OwlMask
   maskName: Owl
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 21300000, guid: e50876ad19bcbb843b67fb6f79a663fa, type: 3}
+  maskIcon: {fileID: 21300000, guid: 7b61865a77a3b334b8c203bed64ad822, type: 3}
   energyCost: 0
-  slowMotionFactor: 0.3
+  maskOverlay: {fileID: 21300000, guid: 1c6c3e8db989bd742a950b81432d44f3, type: 3}
+  maskTintColor: {r: 0.7283019, g: 0.50344944, b: 0.40537554, a: 0.24313726}
+  timeSlowFactor: 0.1
