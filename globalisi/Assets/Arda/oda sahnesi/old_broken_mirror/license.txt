@@ -1,0 +1,11 @@
+Model Information:
+* title:	Old Broken Mirror
+* source:	https://sketchfab.com/3d-models/old-broken-mirror-b5de0c9e3d4d49e684bc26db39b12f07
+* author:	CHooverShrimp (https://sketchfab.com/CHooverShrimp)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Old Broken Mirror" (https://sketchfab.com/3d-models/old-broken-mirror-b5de0c9e3d4d49e684bc26db39b12f07) by CHooverShrimp (https://sketchfab.com/CHooverShrimp) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
