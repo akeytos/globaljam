@@ -45,6 +45,11 @@ public class PlayerMovement : MonoBehaviour
     public UnityEvent onEquipFPS;
     public UnityEvent onUnequipTPS;
 
+    [Header("Animation")]
+    public Animator animator;
+    [Tooltip("Animator içindeki yürüyüş bool parametresinin adı. Varsayılan: Walk")]
+    public string walkBoolName = "Walk";
+
     [Header("References")]
     public MaskWheelController wheelController;
     public Transform cameraTransform;
@@ -54,9 +59,36 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
     private bool isMenuOpen = false;
 
+    // Animator bulunamazsa spam olmasın diye 1 kere uyarı basıyoruz
+    private bool warnedAnimatorMissing = false;
+
+    private void SetWalk(bool value)
+    {
+        if (animator == null)
+        {
+            if (!warnedAnimatorMissing)
+            {
+                warnedAnimatorMissing = true;
+                Debug.LogWarning($"[PlayerMovement] Animator bulunamadı. " +
+                                 $"AnılPlayer parent'ta script var ama Animator child'da olabilir. " +
+                                 $"Inspector'dan bağla veya otomatik bulması için child'da Animator olduğundan emin ol. (GameObject: {name})");
+            }
+            return;
+        }
+
+        animator.SetBool(walkBoolName, value);
+    }
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+
+        // ✅ ÖNEMLİ FIX: Script parent'ta, Animator child'daysa otomatik bul
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>(true);
+        }
+
         moveAction = new InputAction("Move", InputActionType.Value, expectedControlType: "Vector2");
         var wasd = moveAction.AddCompositeBinding("2DVector");
         wasd.With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")
@@ -75,6 +107,10 @@ public class PlayerMovement : MonoBehaviour
         HandleWebAction(input);
 
         if (dashCooldownTimer > 0) dashCooldownTimer -= Time.unscaledDeltaTime;
+
+        // ✅ Menü / web / dash sırasında yürüyüş animasyonu kapalı kalsın
+        if (isMenuOpen || isWebbed || isDashing)
+            SetWalk(false);
 
         if (isWebbed)
         {
@@ -102,6 +138,12 @@ public class PlayerMovement : MonoBehaviour
         }
         else moveDir = new Vector3(input.x, 0f, input.y);
 
+        // ✅ Asıl istek: karakter yürüyorsa Walk true
+        // - küçük input jitter'larını engellemek için eşik
+        // - isMenuOpen/isWebbed/isDashing Update'te zaten false'a zorlanıyor
+        bool isWalking = moveDir.sqrMagnitude > 0.01f;
+        SetWalk(isWalking);
+
         controller.Move(moveDir * currentSpeed * Time.deltaTime);
 
         if (isGrounded && velocity.y < 0) velocity.y = -2f;
@@ -126,6 +168,9 @@ public class PlayerMovement : MonoBehaviour
                 isWebbed = true;
                 controller.enabled = false; // Yapışma anında fizikleri kapat
 
+                // ✅ web başlayınca yürüyüş animasyonu kapansın
+                SetWalk(false);
+
                 if (webLine != null)
                 {
                     webLine.enabled = true;
@@ -144,6 +189,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void ExecuteWebMove()
     {
+        SetWalk(false);
+
         Vector3 direction = (webTargetPoint - transform.position).normalized;
         float distance = Vector3.Distance(transform.position, webTargetPoint);
 
@@ -165,6 +212,9 @@ public class PlayerMovement : MonoBehaviour
         controller.enabled = true;
         if (webLine != null) webLine.enabled = false;
         velocity = Vector3.zero;
+
+        // web bittiğinde hareket yoksa Walk false kalsın
+        SetWalk(false);
     }
 
     private void HandleInput()
@@ -175,7 +225,14 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (isMaskEquipped) UnequipMask();
-            else if (wheelController != null) { isMenuOpen = !isMenuOpen; wheelController.SetMenuState(isMenuOpen); }
+            else if (wheelController != null)
+            {
+                isMenuOpen = !isMenuOpen;
+                wheelController.SetMenuState(isMenuOpen);
+
+                // Menü açılınca yürüyüş animasyonu kapansın
+                if (isMenuOpen) SetWalk(false);
+            }
         }
         if (isMenuOpen && Input.GetKeyDown(KeyCode.R)) EquipCurrentSelected();
     }
@@ -183,11 +240,14 @@ public class PlayerMovement : MonoBehaviour
     private IEnumerator DashAction()
     {
         isDashing = true;
+        SetWalk(false);
+
         dashCooldownTimer = dashCooldown;
         Vector2 input = moveAction.ReadValue<Vector2>();
         Vector3 dashDir = (cameraTransform.right * input.x) + (cameraTransform.forward * input.y);
         if (dashDir.sqrMagnitude < 0.01f) dashDir = transform.forward;
         dashDir.y = 0; dashDir.Normalize();
+
         float elapsed = 0f;
         while (elapsed < dashDuration)
         {
@@ -195,7 +255,9 @@ public class PlayerMovement : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
+
         isDashing = false;
+        SetWalk(false);
     }
 
     private void EquipCurrentSelected()
@@ -220,6 +282,8 @@ public class PlayerMovement : MonoBehaviour
     public void UnequipMask()
     {
         StopWebbing();
+        SetWalk(false);
+
         if (activeMask != null) activeMask.DeactivateAbility(gameObject);
         var visionUI = FindObjectOfType<MaskVisionUI>();
         if (visionUI != null) visionUI.HideVision();
