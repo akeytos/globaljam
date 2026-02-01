@@ -1,0 +1,11 @@
+Model Information:
+* title:	Toy_Chair
+* source:	https://sketchfab.com/3d-models/toy-chair-ee87bd3b247f4ccab78889b0dd35e59a
+* author:	crisvedharaj (https://sketchfab.com/crisvedharaj)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Toy_Chair" (https://sketchfab.com/3d-models/toy-chair-ee87bd3b247f4ccab78889b0dd35e59a) by crisvedharaj (https://sketchfab.com/crisvedharaj) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

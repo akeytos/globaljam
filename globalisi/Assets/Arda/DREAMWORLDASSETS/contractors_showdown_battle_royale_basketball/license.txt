@@ -1,0 +1,11 @@
+Model Information:
+* title:	Contractors Showdown Battle Royale Basketball
+* source:	https://sketchfab.com/3d-models/contractors-showdown-battle-royale-basketball-0e75fa57dd904c6b841cf4d2fa650350
+* author:	Valger (https://sketchfab.com/Valger)
+
+Model License:
+* license type:	CC-BY-NC-ND-4.0 (http://creativecommons.org/licenses/by-nc-nd/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions can not be distributed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Contractors Showdown Battle Royale Basketball" (https://sketchfab.com/3d-models/contractors-showdown-battle-royale-basketball-0e75fa57dd904c6b841cf4d2fa650350) by Valger (https://sketchfab.com/Valger) licensed under CC-BY-NC-ND-4.0 (http://creativecommons.org/licenses/by-nc-nd/4.0/)
