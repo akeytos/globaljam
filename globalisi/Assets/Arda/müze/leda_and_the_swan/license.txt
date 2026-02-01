@@ -1,0 +1,11 @@
+Model Information:
+* title:	Leda and the Swan
+* source:	https://sketchfab.com/3d-models/leda-and-the-swan-b9680393f9d2433694f5b3c432cf6094
+* author:	Geoffrey Marchal (https://sketchfab.com/geoffreymarchal)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Leda and the Swan" (https://sketchfab.com/3d-models/leda-and-the-swan-b9680393f9d2433694f5b3c432cf6094) by Geoffrey Marchal (https://sketchfab.com/geoffreymarchal) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Portrait of a woman
+* source:	https://sketchfab.com/3d-models/portrait-of-a-woman-61fdcc3bde184224bb44e20116eb3091
+* author:	Geoffrey Marchal (https://sketchfab.com/geoffreymarchal)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Portrait of a woman" (https://sketchfab.com/3d-models/portrait-of-a-woman-61fdcc3bde184224bb44e20116eb3091) by Geoffrey Marchal (https://sketchfab.com/geoffreymarchal) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
