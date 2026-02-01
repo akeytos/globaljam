@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e1e3be8747bb7d4cb7c12cab5f6ae0c, type: 3}
   m_Name: DeerMask
   m_EditorClassIdentifier: Assembly-CSharp::DeerMask
-  maskName: 
+  maskName: Deer
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 21300000, guid: 99fc8474fe2adb24683a279b2de45af0, type: 3}
+  maskIcon: {fileID: 21300000, guid: 10e2f4f1666097341b34a231b855e2b4, type: 3}
   energyCost: 0
-  dashForce: 20
-  dashDuration: 0.2
-  extraJumpCount: 1
+  maskOverlay: {fileID: 21300000, guid: a9ca7e2a7f01e53419eaa0f44781b712, type: 3}
+  maskTintColor: {r: 0.6075471, g: 0.36531514, b: 0.067632556, a: 0.24313726}

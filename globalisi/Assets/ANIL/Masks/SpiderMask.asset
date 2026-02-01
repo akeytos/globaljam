@@ -12,11 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65b2210a5b8e9a94584182fbea1591af, type: 3}
   m_Name: SpiderMask
   m_EditorClassIdentifier: Assembly-CSharp::SpiderMask
-  maskName: 
+  maskName: Spider
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 21300000, guid: f68359b595829b24590b982eec72ac19, type: 3}
+  maskIcon: {fileID: 21300000, guid: 28638ff3c1d7353429f39da454ee4586, type: 3}
   energyCost: 0
-  climbSpeed: 4
-  climbableLayers:
-    serializedVersion: 2
-    m_Bits: 0
+  maskOverlay: {fileID: 21300000, guid: 37d14e3911309464ba1146a572d78a29, type: 3}
+  maskTintColor: {r: 0.3974422, g: 0.11808471, b: 0.5849056, a: 0.24313726}

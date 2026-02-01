@@ -1,47 +1,41 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ChameleonMask", menuName = "Masks/Chameleon")]
+[CreateAssetMenu(fileName = "ChameleonMask", menuName = "Masks/ChameleonMask")]
 public class ChameleonMask : MaskBase
 {
-    [Header("Görünmezlik Ayarlarý")]
-    public float transparencyAmount = 0.2f; // Ne kadar þeffaf olacak? (0 tam görünmez)
-    public Color invisibleColor = new Color(1, 1, 1, 0.2f);
+    [Header("Bukalemun Ayarlarý")]
+    public float invisibleAlpha = 0.2f; // Ne kadar þeffaf olacak?
+    public string invisibleLayer = "InvisiblePlayer"; // Düþmanlarýn görmediði katman
 
     public override void ActivateAbility(GameObject player)
     {
-        Debug.Log("Bukalemun Ruhu: Kimse seni göremiyor...");
+        if (string.IsNullOrEmpty(maskName)) maskName = "Bukalemun";
 
-        // Karakterin tüm modellerini bul ve þeffaflaþtýr
-        Renderer[] renderers = player.GetComponentsInChildren<Renderer>();
-        foreach (Renderer rend in renderers)
+        var meshRenderer = player.GetComponentInChildren<SkinnedMeshRenderer>();
+        if (meshRenderer != null)
         {
-            // Shader'ýn "Transparent" modunda olduðundan emin olmalýsýn
-            rend.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            rend.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            rend.material.EnableKeyword("_ALPHABLEND_ON");
-            rend.material.renderQueue = 3000;
-
-            Color c = rend.material.color;
-            c.a = transparencyAmount;
-            rend.material.color = c;
+            // Materyalin rengini þeffaflaþtýr
+            Color c = meshRenderer.material.color;
+            c.a = invisibleAlpha;
+            meshRenderer.material.color = c;
         }
 
-        // Düþmanlara "Ben artýk görünmezim" bilgisi gönderilmeli
-        // player.tag = "InvisiblePlayer"; 
+        // Katmaný deðiþtir (Düþmanlar bu katmaný görmeyecek þekilde ayarlanmalý)
+        player.layer = LayerMask.NameToLayer(invisibleLayer);
+        Debug.Log("<color=cyan>BUKALEMUN MASKESÝ AKTÝF:</color> Görünmezlik moduna geçildi.");
     }
 
     public override void DeactivateAbility(GameObject player)
     {
-        Debug.Log("Bukalemun Ruhu: Görünür oldun!");
-
-        Renderer[] renderers = player.GetComponentsInChildren<Renderer>();
-        foreach (Renderer rend in renderers)
+        var meshRenderer = player.GetComponentInChildren<SkinnedMeshRenderer>();
+        if (meshRenderer != null)
         {
-            Color c = rend.material.color;
+            Color c = meshRenderer.material.color;
             c.a = 1.0f; // Tam görünür yap
-            rend.material.color = c;
+            meshRenderer.material.color = c;
         }
 
-        // player.tag = "Player";
+        player.layer = LayerMask.NameToLayer("Player"); // Normal katmana dön
+        Debug.Log("<color=white>BUKALEMUN MASKESÝ DEVRE DIÞI</color>");
     }
 }

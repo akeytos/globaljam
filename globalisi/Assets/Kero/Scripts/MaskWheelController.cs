@@ -42,11 +42,21 @@ public class MaskWheelController : MonoBehaviour
         if (state)
         {
             ResetVisualsToCenter();
-            Time.timeScale = 0.2f; // Zamaný yavaþlat (Opsiyonel, sevmezsen 1f yap)
+            Time.timeScale = 0.2f; // Menü açýkken yavaþlatma
         }
         else
         {
-            Time.timeScale = 1f;
+            // KRÝTÝK DÜZELTME: Eðer aktif maske Baykuþ (OwlMask) ise zamaný 1 yapma!
+            if (playerMovement.activeMask != null && playerMovement.activeMask is OwlMask)
+            {
+                // Baykuþ maskesi zaten ActivateAbility içinde kendi zamanýný (0.1f) ayarladý.
+                // O yüzden menü kapanýrken zamaný tekrar 1f yaparak onu bozmuyoruz.
+                Time.timeScale = (playerMovement.activeMask as OwlMask).timeSlowFactor;
+            }
+            else
+            {
+                Time.timeScale = 1f; // Diðer maskelerde veya maskesiz durumda zamaný normale döndür
+            }
         }
     }
 

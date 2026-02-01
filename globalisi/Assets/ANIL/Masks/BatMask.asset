@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1acd84a8a2bd36b45b7e2f3bf691a2cc, type: 3}
   m_Name: BatMask
   m_EditorClassIdentifier: Assembly-CSharp::BatMask
-  maskName: 
+  maskName: Bat
   maskModel: {fileID: 0}
-  maskIcon: {fileID: 21300000, guid: 8e696f373265fb14aa2dd826bc2cf992, type: 3}
+  maskIcon: {fileID: 21300000, guid: abc33044a8d3850418d2caefb1224c83, type: 3}
   energyCost: 0
+  maskOverlay: {fileID: 21300000, guid: fbd7e2834be1d4145be36af3a13edbd9, type: 3}
+  maskTintColor: {r: 0.6377357, g: 0.60524726, b: 0.60524726, a: 0.23921569}
