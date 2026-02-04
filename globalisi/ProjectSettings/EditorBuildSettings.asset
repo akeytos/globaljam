@@ -5,23 +5,26 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
-    path: Assets/Kero/Scenes/SampleScene.unity
+  - enabled: 0
+    path: Assets/others/Kero/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
-    path: Assets/Arda/Scenes/OdaSahnesi.unity
+    path: Assets/Arda/OldScenes/OdaSahnesi.unity
     guid: c11c9a35bd3e66649bdb3c46884d6054
   - enabled: 1
-    path: Assets/Arda/Scenes/LazerSahnesi.unity
+    path: Assets/Arda/OldScenes/LazerSahnesi.unity
     guid: b9374a88ccc84b542b19b42f1605c37d
-  - enabled: 1
-    path: Assets/Arda/Scenes/SampleScene.unity
+  - enabled: 0
+    path: Assets/Arda/OldScenes/SampleScene.unity
     guid: 3591ce71a7052fd409779e8423f3c077
   - enabled: 1
-    path: Assets/Arda/Scenes/HAVALANDIRMA.unity
+    path: Assets/Arda/OldScenes/HAVALANDIRMA.unity
     guid: 10be5bffcfb83f54eb16232cb930110e
   - enabled: 1
-    path: Assets/Arda/Scenes/Arda.unity
+    path: Assets/Arda/OldScenes/Dream.unity
+    guid: 2883bcd1010aae9469b96684efa773e5
+  - enabled: 1
+    path: Assets/Arda/OldScenes/Arda.unity
     guid: b2643ed2f6d902c4e84e45534513cc5c
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
